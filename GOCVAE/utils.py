@@ -69,24 +69,6 @@ def train_test_split(adata, train_frac=0.85):
 
 
 def label_encoder(adata, le=None, condition_key='condition'):
-    """
-        Encode labels of Annotated `adata` matrix using sklearn.preprocessing.LabelEncoder class.
-        对输入的 AnnData 对象中的条件（扰动条件）进行标签编码。它使用一个字典将条件标签（如字符串或类别）转换为数值编码。
-        Parameters
-        ----------
-        adata: `~anndata.AnnData`
-            Annotated data matrix.
-        Returns
-        -------
-        labels: numpy nd-array
-            Array of encoded labels
-        Example
-        --------
-        >>> import trvae
-        >>> import scanpy as sc
-        >>> train_data = sc.read("./data/train.h5ad")
-        >>> train_labels, label_encoder = label_encoder(train_data)
-    """
     if le is not None:
         assert isinstance(le, dict)
 
@@ -178,7 +160,7 @@ def convert_ensembl_to_symbol(ensembl_ids):
             ensembl_ids,
             scopes='ensembl.gene',
             fields='symbol',
-            species='human'     # 当使用haber数据库时应该修改这部分换成老鼠
+            species='human'     
         )
 
         converted_genes = []
@@ -252,7 +234,6 @@ def ensure_required_columns(adata):
         def count_perts(condition):
             if condition == 'ctrl':
                 return 0
-            # 移除 ctrl 后计数
             clean = condition.replace('+ctrl', '').replace('ctrl+', '')
             return 1 if '+' not in clean else clean.count('+') + 1
 
@@ -338,16 +319,13 @@ def create_smart_batches(adata, batch_size=512, data_path='../data/GEARS/', go_s
     else:
         go_functional_groups = {'random': list(unique_perturbed_genes)}
 
-    # 4. 构建基因到样本的映射
     gene_to_sample_indices = defaultdict(list)
     for idx in single_gene_indices:
         gene = adata.obs['perturbation'].iloc[idx]
         gene_to_sample_indices[gene].append(idx)
 
-    # 5. 生成智能批次
     batch_indices_list = []
 
-    # 计算每个批次中各类样本的数量
     n_single_per_batch = int(batch_size * single_gene_ratio)
     n_multi_per_batch = int(batch_size * multi_gene_ratio)
 
@@ -386,7 +364,7 @@ def create_smart_batches(adata, batch_size=512, data_path='../data/GEARS/', go_s
             current_batch.extend(control_samples)
 
         current_batch = current_batch[:batch_size]
-        if len(current_batch) >= batch_size * 0.8:  # 至少80%满才使用
+        if len(current_batch) >= batch_size * 0.8:
             batch_indices_list.append(np.array(current_batch))
 
     return batch_indices_list, go_similarity_dict
@@ -462,7 +440,6 @@ class GeneSimNetwork:
         self.edge_list = edge_list
         self.node_map = node_map
 
-        # 构建边索引和权重
         edge_index_list = []
         edge_weight_list = []
 
